@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:untitled2/Rodium/GlobalControl/glbControl.dart';
+import 'package:untitled2/Rodium/ObjectMusic.dart';
 import 'package:untitled2/Rodium/RhodiumAllMusic.dart';
 import 'package:untitled2/Rodium/RhodiumPlayList.dart';
 import 'Themes.dart';
@@ -70,7 +71,13 @@ class RhodiumHomeScreen extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Row(
-                        children: [ Icon(Icons.create_new_folder,size: 30,color: theme.halfGreys,)],
+                        children: [
+                          Icon(
+                            Icons.create_new_folder,
+                            size: 30,
+                            color: theme.halfGreys,
+                          )
+                        ],
                       ),
                     ),
                     borderRadius: BorderRadius.all(Radius.circular(50)),
@@ -83,14 +90,15 @@ class RhodiumHomeScreen extends StatelessWidget {
           ],
         ));
   }
+
   unitOne({listName}) {
     return InkWell(
       onTap: () async {
         // Get.to(() => PlayListScreen(), arguments: [
         //   {"first": Title[atindex]},
         // ]);
-        pla.nextScreen()
-;      },
+        pla.nextScreen();
+      },
       child: Container(
         width: 170,
         height: 170,
@@ -127,7 +135,6 @@ class RhodiumHomeScreen extends StatelessWidget {
   }
 
   // final mc = Get.put(MusicController());
-
 
   unitTwo() {
     return Flexible(
@@ -186,8 +193,8 @@ class RhodiumHomeScreen extends StatelessWidget {
       ),
     );
   }
-  final pla = Get.put(PlayListAddOn());
 
+  final pla = Get.put(PlayListAddOn());
 }
 
 class PlayListAddOn extends GetxController {
@@ -212,6 +219,8 @@ class PlayListAddOn extends GetxController {
     saveLocal = await SharedPreferences.getInstance();
     List<String> item = saveLocal.getStringList(strkey.saveTitleList) ?? [];
     itemsec = saveLocal.getStringList(strkey.saveTitleListSec) ?? [];
+    var objs = json.decode(saveLocal.getString(strkey.saveObj).toString());
+    var objss = saveLocal.getStringList(strkey.saveObjList);
     itemsec = itemsec + item;
     saveLocal.setStringList(strkey.saveTitleListSec, itemsec);
     pushList(getList: itemsec);
@@ -226,16 +235,15 @@ class PlayListAddOn extends GetxController {
     super.onInit();
   }
 
-  nextScreen(){
+  nextScreen() {
     saveLocal.setStringList(strkey.saveTitleListSec, itemsec);
     Get.to(RhodiumAllSong());
 
     update();
   }
 
-
-  pushList({getList}){
-    saveLocal.setStringList(strkey.saveTitleListSec,getList);
+  pushList({getList}) {
+    saveLocal.setStringList(strkey.saveTitleListSec, getList);
     update();
   }
 
@@ -314,10 +322,30 @@ class PlayListAddOn extends GetxController {
     Title.value = [];
   }
 
+  List prop = [];
+  int index = 0;
+
   saveLocalPlaylist({context}) async {
     Title.add(textField.value.text);
     titleStr.add(textField.value.text);
     await saveLocal.setStringList(strkey.saveTitleList, titleStr);
+    index++;
+    prop = [
+      {"name": "${textField.value.text}", "index": "dsadsad"}
+    ];
+    prop.add(
+      {"name": "${textField.value.text}", "index": "dsadsad"}
+    );
+    List dasda = [];
+    dasda.add(prop);
+    Map<String, String> toJson() => {
+      'name': 'name',
+      'age': 'age',
+      'location': 'location',
+    };
+    //prop.add(ObjectList(image: "dasd",index:' 321423',name: "dasdasd",plattime: 'dfsdfsdfs'));
+    saveLocal.setString(strkey.saveObj, json.encode(prop));
+    // saveLocal.setStringList(strkey.saveObjList,json.encode(prop));
     textField.value.clear();
     Navigator.pop(context);
     update();

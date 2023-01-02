@@ -6,5 +6,6 @@ class StrKey {
   String saveTitleLisMerge = 'saveTitleLisMerge';
   String saveSubtitleList = 'saveSubtitleList';
   String saveSubtitleListSec = 'saveSubtitleListSec';
-  String objPlaylist = 'objPlaylist';
+  String saveObj = 'saveObj';
+  String saveObjList = 'saveObjList';
 }

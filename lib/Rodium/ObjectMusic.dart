@@ -3,6 +3,7 @@ class User {
   String? user_name;
   String? profile_picture;
   bool? isFollowing;
+
   User({
     id,
     user_name,
@@ -10,10 +11,25 @@ class User {
     isFollowing,
   });
 
-  factory User.fromJson(Map<String, dynamic> json) => User(
+  factory User.fromJson(Map<String, dynamic> json) =>
+      User(
         id: json["id"],
         user_name: json["user_name"],
         profile_picture: json["profile_picture"],
         isFollowing: json["is_following"],
       );
+}
+
+class ObjectList {
+  String name = '';
+  String image = '';
+  String plattime = '';
+  String index = '';
+
+  ObjectList({
+    name,
+    image,
+    plattime,
+    index,
+  });
 }
