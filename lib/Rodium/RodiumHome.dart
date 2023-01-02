@@ -10,6 +10,7 @@ class RodiumHomeScreen extends StatelessWidget {
   final theme = AppThemes();
 
   @override
+
   Widget build(BuildContext context) {
     return Scaffold(
         backgroundColor: theme.greys,
