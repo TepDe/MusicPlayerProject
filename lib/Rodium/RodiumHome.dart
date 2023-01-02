@@ -1,23 +1,24 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:untitled2/Rodium/GlobalControl/glbControl.dart';
 import 'package:untitled2/Rodium/RhodiumAllMusic.dart';
 import 'package:untitled2/Rodium/RhodiumPlayList.dart';
 import 'Themes.dart';
 
-class RodiumHomeScreen extends StatelessWidget {
+class RhodiumHomeScreen extends StatelessWidget {
   ////main homeScreen
   final theme = AppThemes();
 
   @override
-
   Widget build(BuildContext context) {
     return Scaffold(
         backgroundColor: theme.greys,
         appBar: AppBar(
           elevation: 0,
           title: Text(
-            
             'Rhodium',
             style: TextStyle(color: Colors.white),
           ),
@@ -48,7 +49,7 @@ class RodiumHomeScreen extends StatelessWidget {
             ),
             Padding(
               padding:
-              const EdgeInsets.only(bottom: 18, left: 18, right: 8, top: 8),
+                  const EdgeInsets.only(bottom: 18, left: 18, right: 8, top: 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -85,13 +86,11 @@ class RodiumHomeScreen extends StatelessWidget {
 
   unitOne({listName}) {
     return InkWell(
-      onTap: () {
+      onTap: () async {
         // Get.to(() => PlayListScreen(), arguments: [
         //   {"first": Title[atindex]},
         // ]);
-        Get.to(RhodiumAllSong(), arguments: [
-          {'c': pla.Title}
-        ]);
+        Get.to(RhodiumAllSong());
       },
       child: Container(
         width: 170,
@@ -136,49 +135,56 @@ class RodiumHomeScreen extends StatelessWidget {
     return Flexible(
       child: Container(
         color: theme.darkGreys,
-        child: Obx(() =>
-            ListView.builder(
-                padding:
+        child: Obx(() => ListView.builder(
+            padding:
                 const EdgeInsets.only(bottom: 18, left: 18, right: 8, top: 8),
-                itemCount: pla.Title.value.length,
-                itemBuilder: (BuildContext context, int index) {
-                  return Column(
-                    children: [
-                      ListTile(
-                        onTap: () {
-                          pla.sentPara(index, context);
-                        },
-                        trailing: Icon(
-                          Icons.more_vert,
-                          color: Colors.white,
-                        ),
-                        leading: Container(
-                          height: 60,
-                          width: 60,
-                          decoration: BoxDecoration(
-                            color: theme.white,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: Icon(Icons.music_note_sharp),
-                          ),
-                        ),
-                        subtitle: Text("Track 0",
-                            style: TextStyle(
-                              color: theme.halfGreys,
-                            )),
-                        title: Text("${pla.Title[index]}",
-                            style: TextStyle(
-                              color: Colors.white,
-                            )),
-                      ),
-                      Divider(
+            itemCount: pla.Title.value.length,
+            itemBuilder: (BuildContext context, int index) {
+              return Column(
+                children: [
+                  ListTile(
+                    onTap: () {
+                      pla.sentPara(index, context);
+                    },
+                    trailing: PopupMenuButton<String>(
+                      itemBuilder: (BuildContext context) {
+                        return {'Add to playlist', 'Settings'}
+                            .map((String choice) {
+                          return PopupMenuItem<String>(
+                            value: choice,
+                            child: Text(choice),
+                          );
+                        }).toList();
+                      },
+                      onSelected: (value) {},
+                    ),
+                    leading: Container(
+                      height: 60,
+                      width: 60,
+                      decoration: BoxDecoration(
                         color: theme.white,
-                      )
-                    ],
-                  );
-                })),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Icon(Icons.music_note_sharp),
+                      ),
+                    ),
+                    subtitle: Text("Track 0",
+                        style: TextStyle(
+                          color: theme.halfGreys,
+                        )),
+                    title: Text("${pla.Title[index]}",
+                        style: TextStyle(
+                          color: Colors.white,
+                        )),
+                  ),
+                  Divider(
+                    color: theme.white,
+                  )
+                ],
+              );
+            })),
       ),
     );
   }
@@ -198,6 +204,8 @@ class PlayListAddOn extends GetxController {
   final theme = AppThemes();
 
   late SharedPreferences saveLocal;
+  List<String> itemsec = [];
+  List<String> listToPlay = [];
 
   PlayListAddOn() {
     onInit();
@@ -208,12 +216,15 @@ class PlayListAddOn extends GetxController {
     // var newList = [list1, list2, list3].expand((x) => x).toList()
     saveLocal = await SharedPreferences.getInstance();
     List<String> item = saveLocal.getStringList(strkey.saveTitleList) ?? [];
-    List<String> itemsec = saveLocal.getStringList(
-        strkey.saveTitleListSec.value) ?? [];
+    itemsec = saveLocal.getStringList(strkey.saveTitleListSec) ?? [];
     itemsec = itemsec + item;
-    saveLocal.setStringList(strkey.saveTitleListSec.value, itemsec);
+    saveLocal.setStringList(strkey.saveTitleListSec, itemsec);
     Title.value = itemsec;
+    listToPlay = itemsec;
+    update();
+
     await saveLocal.remove(strkey.saveTitleList);
+
     FocusManager.instance.primaryFocus?.unfocus();
     super.onInit();
   }
@@ -287,18 +298,20 @@ class PlayListAddOn extends GetxController {
     );
   }
 
-
   clearAllLocalPlayList() async {
-    await saveLocal.remove(strkey.saveTitleListSec.value);
+    await saveLocal.remove(strkey.saveTitleListSec);
     await saveLocal.remove(strkey.saveTitleList);
     Title.value = [];
   }
 
+  List<String> dasd= [];
   saveLocalPlaylist({context}) async {
     Title.add(textField.value.text);
     titleStr.add(textField.value.text);
-    await saveLocal.setStringList(
-        strkey.saveTitleList, titleStr);
+
+    await saveLocal.setStringList(strkey.saveTitleList, titleStr);
+    final fjf=  saveLocal.setStringList(strkey.saveTitleListSec, itemsec);
+
     textField.value.clear();
     Navigator.pop(context);
     update();
@@ -306,7 +319,10 @@ class PlayListAddOn extends GetxController {
 }
 
 class PlayListObj {
-  List song = [];
+  String name = '';
+  List<SongObject> song = [];
+
+  PlayListObj({name, song});
 }
 
 class SongObject {
@@ -314,13 +330,4 @@ class SongObject {
   int index = 0;
   var image;
   String playtime = '';
-}
-
-class StrKey {
-  String testSave = 'testSave';
-  String saveTitleList = 'saveTitleList';
-  var saveTitleListSec = 'saveTitleListSec'.obs;
-  String saveTitleLisMerge = 'saveTitleLisMerge';
-  String saveSubtitleList = 'saveSubtitleList';
-  String saveSubtitleListSec = 'saveSubtitleListSec';
 }
