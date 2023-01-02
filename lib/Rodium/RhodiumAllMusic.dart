@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:untitled2/BackUp/Rodium3.dart';
 import 'package:untitled2/Rodium/GlobalControl/glbControl.dart';
 import 'package:untitled2/Rodium/RodiumHome.dart';
 import 'Themes.dart';
@@ -12,7 +11,8 @@ class RhodiumAllSong extends StatelessWidget {
   ////All Music
   final mc = Get.put(MusicController());
   final themes = AppThemes();
-  final dialog = Get.put(PlayListAddOn());
+  final pla = Get.put(PlayListAddOn());
+  late SharedPreferences saveLocal;
 
   @override
   Widget build(BuildContext context) {
@@ -145,22 +145,25 @@ class MusicController extends GetxController {
   var whenEnd;
   var atLoopIndex = 0.obs;
   var argumentData = Get.arguments;
-
-  late SharedPreferences saveLocal;
-  final strkey = StrKey();
   var getPlay = [].obs;
-  final pla = PlayListAddOn();
   final themes = AppThemes();
+  var Title = [].obs;
+  final hs = Get.put(PlayListAddOn());
 
   MusicController() {
     onInit();
   }
 
+  var itemsec = [].obs;
+
   @override
   void onInit() async {
     print("screens builded");
     await requestStorage();
+    hs.saveLocal = await SharedPreferences.getInstance();
 
+    List test = hs.saveLocal.getStringList(hs.strkey.saveTitleListSec) ?? [];
+    itemsec.value = test;
     player.durationStream.listen((event) {
       isPlaying = event == player.playing;
       whenEnd = event;
@@ -198,31 +201,32 @@ class MusicController extends GetxController {
             content: SingleChildScrollView(
               child: ListBody(
                 children: <Widget>[
-                  Text('This is a demo alert dialog.'),
+                  const Text('This is a demo alert dialog.'),
                   SizedBox(
-                      width: 200,
-                      height: 230,
-                      child: Obx(() => ListView.builder(
-                          padding: const EdgeInsets.all(8),
-                          itemCount: pla.Title.length,
-                          shrinkWrap: true,
-                          itemBuilder: (BuildContext context, int index) {
-                            return Flexible(
-                                child: InkWell(
-                              onTap: () {},
-                              child: SizedBox(
-                                width: Get.width,
-                                child: Padding(
-                                  padding: const EdgeInsets.all(14.0),
-                                  child: Text(
-                                    '${pla.Title[index]}',
-                                    style: TextStyle(
-                                        color: Colors.black, fontSize: 20),
-                                  ),
-                                ),
+                    width: 200,
+                    height: 230,
+                    child: Obx(() => ListView.builder(
+                        padding: const EdgeInsets.all(8),
+                        itemCount: itemsec.value.length,
+                        shrinkWrap: true,
+                        itemBuilder: (BuildContext context, int index) {
+                          return Flexible(
+                              child: InkWell(
+                            onTap: () {},
+                            child: SizedBox(
+                              width: Get.width,
+                              child: Padding(
+                                padding: const EdgeInsets.all(14.0),
+                                child: Obx(() => Text(
+                                  '+++${itemsec.value[index]}',
+                                  style: const TextStyle(
+                                      color: Colors.black, fontSize: 20),
+                                )),
                               ),
-                            ));
-                          })))
+                            ),
+                          ));
+                        })),
+                  )
                 ],
               ),
             ),
@@ -240,7 +244,6 @@ class MusicController extends GetxController {
     } else {
       return Container();
     }
-    update();
   }
 
   renderBtnControl({context, songPath}) {
