@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:untitled2/BackUp/Rodium3.dart';
+import 'package:untitled2/Rodium/GlobalControl/glbControl.dart';
 import 'package:untitled2/Rodium/RodiumHome.dart';
 import 'Themes.dart';
 
@@ -11,14 +13,6 @@ class RhodiumAllSong extends StatelessWidget {
   final mc = Get.put(MusicController());
   final themes = AppThemes();
   final dialog = Get.put(PlayListAddOn());
-  var items = [
-    'Item 1',
-    'Item 2',
-    'Item 3',
-    'Item 4',
-    'Item 5',
-  ];
-  String dropdownvalue = 'Item 1';
 
   @override
   Widget build(BuildContext context) {
@@ -78,43 +72,24 @@ class RhodiumAllSong extends StatelessWidget {
                                   //Flexible(flex:1,child: Obx(()=> Text("${mc.duration.value}" ,style: TextStyle(color: Colors.red),overflow: TextOverflow.ellipsis))),
                                 ],
                               ),
-                              trailing:
-
-                                  // DropdownButton(
-                                  //
-                                  //   // Initial Value
-                                  //   value: dropdownvalue,
-                                  //
-                                  //   // Down Arrow Icon
-                                  //   icon: const Icon(Icons.keyboard_arrow_down),
-                                  //
-                                  //   // Array list of items
-                                  //   items: items.map((String items) {
-                                  //     return DropdownMenuItem(
-                                  //       value: items,
-                                  //       child: Text(items),
-                                  //     );
-                                  //   }).toList(),
-                                  //   // After selecting the desired option,it will
-                                  //   // change button value to selected value
-                                  //   onChanged: (String? newValue) {
-                                  //
-                                  //   },
-                                  // ),
-                                  PopupMenuButton<String>(
-                                itemBuilder: (BuildContext context) {
-                                  return {'Add to playlist', 'Settings'}
-                                      .map((String choice) {
-                                    return PopupMenuItem<String>(
-                                      value: choice,
-                                      child: Text(choice),
-                                    );
-                                  }).toList();
-                                },
-                                onSelected: (value) {
-                                  mc.handleClick(
-                                      value: value, context: context);
-                                },
+                              trailing: GetBuilder<MusicController>(
+                                builder: (_) => PopupMenuButton<String>(
+                                  itemBuilder: (BuildContext context) {
+                                    return {'Add to playlist', 'Settings'}
+                                        .map((String choice) {
+                                      return PopupMenuItem<String>(
+                                        value: choice,
+                                        child: Text(choice),
+                                      );
+                                    }).toList();
+                                  },
+                                  onSelected: (value) {
+                                    mc.handleClick(
+                                        value: value,
+                                        context: context,
+                                        path: item.data![index].uri);
+                                  },
+                                ),
                               ),
                               onTap: () async {
                                 // mc.songName.value =
@@ -138,7 +113,7 @@ class RhodiumAllSong extends StatelessWidget {
                 },
               ),
             )),
-            mc.renderBtnControl(context: context,songPath:  mc.songPath)
+            mc.renderBtnControl(context: context, songPath: mc.songPath)
           ],
         ),
       ),
@@ -173,21 +148,18 @@ class MusicController extends GetxController {
 
   late SharedPreferences saveLocal;
   final strkey = StrKey();
-  var getPlay=[].obs;
-  final pla =PlayListAddOn();
+  var getPlay = [].obs;
+  final pla = PlayListAddOn();
+  final themes = AppThemes();
 
   MusicController() {
     onInit();
-
   }
+
   @override
   void onInit() async {
     print("screens builded");
     await requestStorage();
-
-    getPlay.value = await argumentData[0]['list'];
-    getPlay.value = saveLocal.getStringList(strkey.saveTitleListSec.value) ?? [];
-
 
     player.durationStream.listen((event) {
       isPlaying = event == player.playing;
@@ -212,37 +184,45 @@ class MusicController extends GetxController {
     player.positionStream.listen((event) {
       position.value = event;
     });
-
   }
-  handleClick({String? value, context}) {
+
+  handleClick({String? value, context, path}) {
     if (value == "Add to playlist") {
       return showDialog<void>(
         context: context,
         barrierDismissible: true, // user must tap button!
         builder: (BuildContext context) {
           return AlertDialog(
-            title: const Text('AlertDialog Title'),
+            backgroundColor: themes.halfGreys,
+            title: const Text('Playlist'),
             content: SingleChildScrollView(
               child: ListBody(
                 children: <Widget>[
                   Text('This is a demo alert dialog.'),
-                  Container(
-                    color: Colors.blue,
-                    width: 180,
-                    height: 150,
-                    child:
-                    Obx(()=>ListView.builder(
-                        padding: const EdgeInsets.all(8),
-                        itemCount: getPlay.value.length,
-                        shrinkWrap: true,
-                        itemBuilder: (BuildContext context, int index) {
-                          return Flexible(
-                              child: Text(
-                                'Entry ${getPlay.value[index]}',
-                                style: TextStyle(color: Colors.black),
-                              ));
-                        }))
-                  )
+                  SizedBox(
+                      width: 200,
+                      height: 230,
+                      child: Obx(() => ListView.builder(
+                          padding: const EdgeInsets.all(8),
+                          itemCount: pla.Title.length,
+                          shrinkWrap: true,
+                          itemBuilder: (BuildContext context, int index) {
+                            return Flexible(
+                                child: InkWell(
+                              onTap: () {},
+                              child: SizedBox(
+                                width: Get.width,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(14.0),
+                                  child: Text(
+                                    '${pla.Title[index]}',
+                                    style: TextStyle(
+                                        color: Colors.black, fontSize: 20),
+                                  ),
+                                ),
+                              ),
+                            ));
+                          })))
                 ],
               ),
             ),
@@ -260,6 +240,7 @@ class MusicController extends GetxController {
     } else {
       return Container();
     }
+    update();
   }
 
   renderBtnControl({context, songPath}) {
@@ -655,9 +636,6 @@ class MusicController extends GetxController {
     await player.play();
   }
 
-
-
-
   dragBottom() {
     return DraggableScrollableSheet(
         initialChildSize: 0.75,
@@ -885,5 +863,3 @@ class MusicController extends GetxController {
     update();
   }
 }
-
-class ObjectSong {}
