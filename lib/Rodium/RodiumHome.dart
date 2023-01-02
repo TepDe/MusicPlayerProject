@@ -17,6 +17,7 @@ class RodiumHomeScreen extends StatelessWidget {
         appBar: AppBar(
           elevation: 0,
           title: Text(
+            
             'Rhodium',
             style: TextStyle(color: Colors.white),
           ),
