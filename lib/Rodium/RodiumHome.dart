@@ -53,7 +53,7 @@ class RhodiumHomeScreen extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
+                  const Text(
                     'Play List',
                     style: TextStyle(
                         color: Colors.white, fontWeight: FontWeight.bold),
@@ -70,7 +70,7 @@ class RhodiumHomeScreen extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Row(
-                        children: [Text("Add PlayList"), Icon(Icons.add)],
+                        children: [ Icon(Icons.create_new_folder,size: 30,color: theme.halfGreys,)],
                       ),
                     ),
                     borderRadius: BorderRadius.all(Radius.circular(50)),
@@ -79,19 +79,18 @@ class RhodiumHomeScreen extends StatelessWidget {
               ),
             ),
             unitTwo(),
-            mc.renderBtnControl(context: context)
+            //mc.renderBtnControl(context: context)
           ],
         ));
   }
-
   unitOne({listName}) {
     return InkWell(
       onTap: () async {
         // Get.to(() => PlayListScreen(), arguments: [
         //   {"first": Title[atindex]},
         // ]);
-        Get.to(RhodiumAllSong());
-      },
+        pla.nextScreen()
+;      },
       child: Container(
         width: 170,
         height: 170,
@@ -127,9 +126,8 @@ class RhodiumHomeScreen extends StatelessWidget {
     );
   }
 
-  final mc = Get.put(MusicController());
-  final pla = Get.put(PlayListAddOn());
-  final str = StrKey();
+  // final mc = Get.put(MusicController());
+
 
   unitTwo() {
     return Flexible(
@@ -188,6 +186,8 @@ class RhodiumHomeScreen extends StatelessWidget {
       ),
     );
   }
+  final pla = Get.put(PlayListAddOn());
+
 }
 
 class PlayListAddOn extends GetxController {
@@ -200,16 +200,11 @@ class PlayListAddOn extends GetxController {
   var param;
   List<String> titleStr = [];
   List<String> subtitleStr = [];
-
   final theme = AppThemes();
-
+  final str = StrKey();
   late SharedPreferences saveLocal;
   List<String> itemsec = [];
   List<String> listToPlay = [];
-
-  PlayListAddOn() {
-    onInit();
-  }
 
   @override
   void onInit() async {
@@ -219,6 +214,8 @@ class PlayListAddOn extends GetxController {
     itemsec = saveLocal.getStringList(strkey.saveTitleListSec) ?? [];
     itemsec = itemsec + item;
     saveLocal.setStringList(strkey.saveTitleListSec, itemsec);
+    pushList(getList: itemsec);
+    saveLocal.remove(strkey.saveTitleList);
     Title.value = itemsec;
     listToPlay = itemsec;
     update();
@@ -227,6 +224,19 @@ class PlayListAddOn extends GetxController {
 
     FocusManager.instance.primaryFocus?.unfocus();
     super.onInit();
+  }
+
+  nextScreen(){
+    saveLocal.setStringList(strkey.saveTitleListSec, itemsec);
+    Get.to(RhodiumAllSong());
+
+    update();
+  }
+
+
+  pushList({getList}){
+    saveLocal.setStringList(strkey.saveTitleListSec,getList);
+    update();
   }
 
   addOnList(context) {
@@ -304,14 +314,10 @@ class PlayListAddOn extends GetxController {
     Title.value = [];
   }
 
-  List<String> dasd= [];
   saveLocalPlaylist({context}) async {
     Title.add(textField.value.text);
     titleStr.add(textField.value.text);
-
     await saveLocal.setStringList(strkey.saveTitleList, titleStr);
-    final fjf=  saveLocal.setStringList(strkey.saveTitleListSec, itemsec);
-
     textField.value.clear();
     Navigator.pop(context);
     update();
