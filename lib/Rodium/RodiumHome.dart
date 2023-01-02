@@ -9,8 +9,6 @@ class RodiumHomeScreen extends StatelessWidget {
   ////main homeScreen
   final theme = AppThemes();
 
-
-  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -24,8 +22,8 @@ class RodiumHomeScreen extends StatelessWidget {
           backgroundColor: theme.blacks,
           actions: [
             IconButton(
-                onPressed: ()async {
-                 pla.clearAllLocalPlayList();
+                onPressed: () async {
+                  pla.clearAllLocalPlayList();
                 },
                 icon: const Icon(
                   Icons.search,
@@ -48,7 +46,7 @@ class RodiumHomeScreen extends StatelessWidget {
             ),
             Padding(
               padding:
-                  const EdgeInsets.only(bottom: 18, left: 18, right: 8, top: 8),
+              const EdgeInsets.only(bottom: 18, left: 18, right: 8, top: 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -89,9 +87,9 @@ class RodiumHomeScreen extends StatelessWidget {
         // Get.to(() => PlayListScreen(), arguments: [
         //   {"first": Title[atindex]},
         // ]);
-        Get.to(RhodiumAllSong(),arguments:[
+        Get.to(RhodiumAllSong(), arguments: [
           {'c': pla.Title}
-        ] );
+        ]);
       },
       child: Container(
         width: 170,
@@ -136,51 +134,51 @@ class RodiumHomeScreen extends StatelessWidget {
     return Flexible(
       child: Container(
         color: theme.darkGreys,
-        child: Obx(() => ListView.builder(
-            padding:
+        child: Obx(() =>
+            ListView.builder(
+                padding:
                 const EdgeInsets.only(bottom: 18, left: 18, right: 8, top: 8),
-            itemCount: pla.Title.value.length,
-            itemBuilder: (BuildContext context, int index) {
-              return Column(
-                children: [
-                  ListTile(
-                    onTap: () {
-                      pla.sentPara(index, context);
-                    },
-                    trailing: Icon(
-                      Icons.more_vert,
-                      color: Colors.white,
-                    ),
-                    leading: Container(
-                      height: 60,
-                      width: 60,
-                      decoration: BoxDecoration(
-                        color: theme.white,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: Icon(Icons.music_note_sharp),
-                      ),
-                    ),
-                    subtitle: Text("Track 0",
-                        style: TextStyle(
-                          color:theme.halfGreys,
-                        )),
-                    title: Text("${pla.Title[index]}",
-                        style: TextStyle(
+                itemCount: pla.Title.value.length,
+                itemBuilder: (BuildContext context, int index) {
+                  return Column(
+                    children: [
+                      ListTile(
+                        onTap: () {
+                          pla.sentPara(index, context);
+                        },
+                        trailing: Icon(
+                          Icons.more_vert,
                           color: Colors.white,
-                        )),
-                  ),
-                  Divider(
-                    color: theme.white,
-                  )
-                ],
-              );
-            })),
+                        ),
+                        leading: Container(
+                          height: 60,
+                          width: 60,
+                          decoration: BoxDecoration(
+                            color: theme.white,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Icon(Icons.music_note_sharp),
+                          ),
+                        ),
+                        subtitle: Text("Track 0",
+                            style: TextStyle(
+                              color: theme.halfGreys,
+                            )),
+                        title: Text("${pla.Title[index]}",
+                            style: TextStyle(
+                              color: Colors.white,
+                            )),
+                      ),
+                      Divider(
+                        color: theme.white,
+                      )
+                    ],
+                  );
+                })),
       ),
     );
-
   }
 }
 
@@ -199,18 +197,20 @@ class PlayListAddOn extends GetxController {
 
   late SharedPreferences saveLocal;
 
-  PlayListAddOn(){
+  PlayListAddOn() {
     onInit();
   }
+
   @override
   void onInit() async {
     // var newList = [list1, list2, list3].expand((x) => x).toList()
     saveLocal = await SharedPreferences.getInstance();
     List<String> item = saveLocal.getStringList(strkey.saveTitleList) ?? [];
-    List<String> itemsec = saveLocal.getStringList(strkey.saveTitleListSec.value) ?? [];
-    itemsec = itemsec+item;
-    saveLocal.setStringList(strkey.saveTitleListSec.value,itemsec);
-    Title.value =itemsec;
+    List<String> itemsec = saveLocal.getStringList(
+        strkey.saveTitleListSec.value) ?? [];
+    itemsec = itemsec + item;
+    saveLocal.setStringList(strkey.saveTitleListSec.value, itemsec);
+    Title.value = itemsec;
     await saveLocal.remove(strkey.saveTitleList);
     FocusManager.instance.primaryFocus?.unfocus();
     super.onInit();
@@ -286,11 +286,12 @@ class PlayListAddOn extends GetxController {
   }
 
 
-  clearAllLocalPlayList() async{
+  clearAllLocalPlayList() async {
     await saveLocal.remove(strkey.saveTitleListSec.value);
     await saveLocal.remove(strkey.saveTitleList);
-    Title.value=[];
+    Title.value = [];
   }
+
   saveLocalPlaylist({context}) async {
     Title.add(textField.value.text);
     titleStr.add(textField.value.text);
