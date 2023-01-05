@@ -43,67 +43,63 @@ class RhodiumAllSong extends StatelessWidget {
                     return const Text("Nothing found!");
                   }
                   mc.storageList = item.data!;
+                  mc.lengthCatch.value = item.data!.length;
                   return GetBuilder<MusicController>(
                     builder: (_dx) => ListView.builder(
                       itemCount: item.data!.length,
                       itemBuilder: (context, index) {
                         mc.firstSong.value = item.data![0].uri!;
                         return Container(
-                          color: mc.markindex == index
-                              ? Colors.lightBlueAccent
-                              : Colors.white,
-                          child: Container(
-                            color: themes.darkGreys,
-                            child: ListTile(
-                              title: Text(
-                                item.data![index].title,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(color: Colors.white),
+                          color: themes.darkGreys,
+                          child: ListTile(
+                            title: Text(
+                              item.data![index].title,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(color: mc.nextsong == index?  Colors.blue : Colors.white),
+                            ),
+                            subtitle: Row(
+                              children: [
+                                Flexible(
+                                    flex: 1,
+                                    child: Text(
+                                        item.data![index].artist ??
+                                            "No Artist",
+                                        style: TextStyle(  color: mc.nextsong == index?  Colors.lightBlueAccent : Colors.white),
+                                        overflow: TextOverflow.ellipsis)),
+                                //Flexible(flex:1,child: Obx(()=> Text("${mc.duration.value}" ,style: TextStyle(color: Colors.red),overflow: TextOverflow.ellipsis))),
+                              ],
+                            ),
+                            trailing: GetBuilder<MusicController>(
+                              builder: (_) => PopupMenuButton<String>(
+                                itemBuilder: (BuildContext context) {
+                                  return {'Add to playlist', 'Settings'}
+                                      .map((String choice) {
+                                    return PopupMenuItem<String>(
+                                      value: choice,
+                                      child: Text(choice),
+                                    );
+                                  }).toList();
+                                },
+                                onSelected: (value) {
+                                  mc.handleClick(
+                                      value: value,
+                                      context: context,
+                                      path: item.data![index].uri);
+                                },
                               ),
-                              subtitle: Row(
-                                children: [
-                                  Flexible(
-                                      flex: 1,
-                                      child: Text(
-                                          item.data![index].artist ??
-                                              "No Artist",
-                                          style: TextStyle(color: Colors.grey),
-                                          overflow: TextOverflow.ellipsis)),
-                                  //Flexible(flex:1,child: Obx(()=> Text("${mc.duration.value}" ,style: TextStyle(color: Colors.red),overflow: TextOverflow.ellipsis))),
-                                ],
-                              ),
-                              trailing: GetBuilder<MusicController>(
-                                builder: (_) => PopupMenuButton<String>(
-                                  itemBuilder: (BuildContext context) {
-                                    return {'Add to playlist', 'Settings'}
-                                        .map((String choice) {
-                                      return PopupMenuItem<String>(
-                                        value: choice,
-                                        child: Text(choice),
-                                      );
-                                    }).toList();
-                                  },
-                                  onSelected: (value) {
-                                    mc.handleClick(
-                                        value: value,
-                                        context: context,
-                                        path: item.data![index].uri);
-                                  },
-                                ),
-                              ),
-                              onTap: () async {
-                                // mc.songName.value =
-                                //     (mc.storageList[mc.nextsong].title).toString();
-                                mc.nextsong = index;
-                                mc.songPath = item.data![index].uri;
-                                mc.songImage.value = item.data![index].id;
-                                mc.superControl(
-                                    id: 4, songPath: item.data![index].uri);
-                              },
-                              leading: QueryArtworkWidget(
-                                id: item.data![index].id,
-                                type: ArtworkType.AUDIO,
-                              ),
+                            ),
+                            onTap: () async {
+                              // mc.songName.value =
+                              //     (mc.storageList[mc.nextsong].title).toString();
+                              mc.nextsong = index;
+                              mc.songPath = item.data![index].uri;
+                              mc.songImage.value = item.data![index].id;
+                              mc.superControl(
+                                  id: 4, songPath: item.data![index].uri);
+                            },
+                            leading: QueryArtworkWidget(
+                              id: item.data![index].id,
+                              type: ArtworkType.AUDIO,
                             ),
                           ),
                         );
@@ -134,7 +130,7 @@ class MusicController extends GetxController {
   var duration = Duration.zero.obs;
   var position = Duration.zero.obs;
   var player = AudioPlayer();
-  int? markindex;
+  int? markCurrentPlay;
   var firstSong = ''.obs;
   List<SongModel> storageList = [];
   var nextsong = 0;
@@ -149,12 +145,9 @@ class MusicController extends GetxController {
   final themes = AppThemes();
   var Title = [].obs;
   final hs = Get.put(PlayListAddOn());
-
-  MusicController() {
-    onInit();
-  }
-
   var itemsec = [].obs;
+  var lengthCatch = 0.obs;
+  var getPlayPause ;
 
   @override
   void onInit() async {
@@ -171,9 +164,11 @@ class MusicController extends GetxController {
     });
     player.positionStream.listen((event) {
       isPlaying = event == player.playing;
-      if (event == whenEnd) {
+      getPlayPause = event;
+      if (event >= whenEnd) {
         if (isShuffle == true) {
-          superControl(id: 3);
+          //superControl(id: 6);
+          onShuffle();
         } else if (isShuffle == false) {
           onLoopSong();
         }
@@ -189,61 +184,85 @@ class MusicController extends GetxController {
     });
   }
 
-  handleClick({String? value, context, path}) {
-    if (value == "Add to playlist") {
-      return showDialog<void>(
-        context: context,
-        barrierDismissible: true, // user must tap button!
-        builder: (BuildContext context) {
-          return AlertDialog(
-            backgroundColor: themes.halfGreys,
-            title: const Text('Playlist'),
-            content: SingleChildScrollView(
-              child: ListBody(
-                children: <Widget>[
-                  const Text('This is a demo alert dialog.'),
-                  SizedBox(
-                    width: 200,
-                    height: 230,
-                    child: Obx(() => ListView.builder(
-                        padding: const EdgeInsets.all(8),
-                        itemCount: itemsec.value.length,
-                        shrinkWrap: true,
-                        itemBuilder: (BuildContext context, int index) {
-                          return Flexible(
-                              child: InkWell(
-                            onTap: () {},
-                            child: SizedBox(
-                              width: Get.width,
-                              child: Padding(
-                                padding: const EdgeInsets.all(14.0),
-                                child: Obx(() => Text(
-                                  '+++${itemsec.value[index]}',
-                                  style: const TextStyle(
-                                      color: Colors.black, fontSize: 20),
-                                )),
-                              ),
-                            ),
-                          ));
-                        })),
-                  )
-                ],
-              ),
-            ),
-            actions: <Widget>[
-              TextButton(
-                child: const Text('Approve'),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
-          );
-        },
-      );
-    } else {
-      return Container();
+  superControl({id, songPath, index}) async {
+    if (id == 1) {
+      nextsong--;
+      if (nextsong == -1) {
+        nextsong = lengthCatch.value - 1;
+        update();
+        controlPlaying(isNextBack: nextsong);
+      } else {
+        update();
+        controlPlaying(isNextBack: nextsong);
+      }
+    } else if (id == 2) {
+      if (isplaypause.value == true) {
+        // isplaypause.value = false;
+        // songImage.value = storageList[nextsong].id;
+        isplaypause.value = false;
+        player.pause();
+      } else if (isplaypause.value == false) {
+        // isplaypause.value = true;
+        // songImage.value = storageList[nextsong].id;
+        // songName.value = storageList[nextsong].title.toString();
+        // await player.setAudioSource(
+        //     AudioSource.uri(Uri.parse((storageList[nextsong].uri).toString())));
+        isplaypause.value = true;
+        player.seek(getPlayPause);
+        await player.play();
+      }
+    } else if (id == 3) {
+      nextsong++;
+      if (nextsong == lengthCatch) {
+        nextsong = 0;
+        controlPlaying(isNextBack: nextsong);
+      } else {
+        controlPlaying(isNextBack: nextsong);
+      }
+    } else if (id == 4) {
+      print(markCurrentPlay);
+      markCurrentPlay = nextsong;
+      update();
+      atLoopIndex.value = nextsong;
+      isplaypause.value = true;
+      songName.value = storageList[nextsong].title.toString();
+      await player.setAudioSource(AudioSource.uri(Uri.parse(songPath)));
+      await player.play();
+    } else if (id == 5) {
+      // loop
+      isShuffle.value = false;
+      isLoop.value = true;
+    } else if (id == 6) {
+      // //shuffle
+      isShuffle.value = true;
+      isLoop.value = false;
     }
+  }
+
+  controlPlaying({isNextBack}) async {
+    isplaypause.value = true;
+    markCurrentPlay = nextsong;
+    update();
+    atLoopIndex.value = nextsong;
+    songImage.value = storageList[nextsong].id;
+    songName.value = storageList[nextsong].title;
+    await player.setAudioSource(
+        AudioSource.uri(Uri.parse((storageList[nextsong].uri).toString())));
+    await player.play();
+  }
+
+  onShuffle() async {
+    nextsong++;
+    isplaypause.value = true;
+    nextsong = nextsong;
+    //markCurrentPlay = nextsong;
+    //atLoopIndex.value = nextsong;
+    update();
+    songImage.value = storageList[nextsong].id;
+    songName.value = storageList[nextsong].title;
+    await player.setAudioSource(
+        AudioSource.uri(Uri.parse((storageList[nextsong].uri).toString())));
+    await player.play();
   }
 
   renderBtnControl({context, songPath}) {
@@ -363,7 +382,7 @@ class MusicController extends GetxController {
                                       songName.value =
                                           (storageList[nextsong].title)
                                               .toString();
-                                      markindex = nextsong;
+                                      markCurrentPlay = nextsong;
                                       await superControl(id: 1);
                                     },
                                     icon: const Icon(
@@ -384,13 +403,13 @@ class MusicController extends GetxController {
                                   ),
                                   IconButton(
                                     onPressed: () async {
-                                      markindex = nextsong;
-                                      songImage.value =
-                                          storageList[nextsong].id;
-
-                                      songName.value =
-                                          (storageList[nextsong].title)
-                                              .toString();
+                                      // markCurrentPlay = nextsong;
+                                      // songImage.value =
+                                      //     storageList[nextsong].id;
+                                      //
+                                      // songName.value =
+                                      //     (storageList[nextsong].title)
+                                      //         .toString();
                                       await superControl(id: 3);
                                     },
                                     icon: const Icon(Icons.skip_next, size: 40),
@@ -403,6 +422,7 @@ class MusicController extends GetxController {
                                 children: [
                                   IconButton(
                                     onPressed: () async {
+                                      //onLoopSong();
                                       superControl(id: 5);
                                     },
                                     icon: Obx(() => Icon(
@@ -492,7 +512,7 @@ class MusicController extends GetxController {
                                   children: [
                                     IconButton(
                                       onPressed: () async {
-                                        markindex = nextsong;
+                                        markCurrentPlay = nextsong;
                                         songName.value =
                                             (storageList[nextsong].title)
                                                 .toString();
@@ -518,7 +538,7 @@ class MusicController extends GetxController {
                                         songName.value =
                                             (storageList[nextsong].title)
                                                 .toString();
-                                        markindex = nextsong;
+                                        markCurrentPlay = nextsong;
                                         await superControl(id: 3);
                                       },
                                       icon: const Icon(
@@ -540,99 +560,67 @@ class MusicController extends GetxController {
             ));
   }
 
-  superControl({id, songPath, index}) async {
-    int lengthCatch = storageList.length;
-    if (id == 1) {
-      nextsong--;
-      if (nextsong == -1) {
-        isplaypause.value = true;
-        nextsong = lengthCatch - 1;
-        markindex = nextsong;
-        songImage.value = storageList[nextsong].id;
-        songName.value = (storageList[nextsong].title).toString();
-        await player.setAudioSource(
-            AudioSource.uri(Uri.parse((storageList[nextsong].uri).toString())));
-        await player.play();
-      } else {
-        markindex = nextsong;
-        isplaypause.value = true;
-        songImage.value = storageList[nextsong].id;
-        update();
-        songName.value = (storageList[nextsong].title).toString();
-        await player.setAudioSource(
-            AudioSource.uri(Uri.parse((storageList[nextsong].uri).toString())));
-        await player.play();
-      }
-      update();
-    } else if (id == 2) {
-      if (isplaypause.value == true) {
-        isplaypause.value = false;
-        songImage.value = storageList[nextsong].id;
-        player.pause();
-        update();
-      } else if (isplaypause.value == false) {
-        isplaypause.value = true;
-        songImage.value = storageList[nextsong].id;
-        update();
-        songName.value = storageList[nextsong].title.toString();
-        await player.setAudioSource(
-            AudioSource.uri(Uri.parse((storageList[nextsong].uri).toString())));
-        await player.play();
-        update();
-      }
-      update();
-    } else if (id == 3) {
-      nextsong++;
-      if (nextsong == lengthCatch) {
-        nextsong = 0;
-        isplaypause.value = true;
-
-        markindex = nextsong;
-        songImage.value = storageList[nextsong].id;
-        update();
-        songName.value = storageList[nextsong].title;
-        await player.setAudioSource(
-            AudioSource.uri(Uri.parse((storageList[nextsong].uri).toString())));
-        await player.play();
-      } else {
-        isplaypause.value = true;
-        markindex = nextsong;
-        songImage.value = storageList[nextsong].id;
-        update();
-        songName.value = storageList[nextsong].title;
-        await player.setAudioSource(
-            AudioSource.uri(Uri.parse((storageList[nextsong].uri).toString())));
-        await player.play();
-      }
-      update();
-    } else if (id == 4) {
-      print(markindex);
-      markindex = nextsong;
-      isplaypause.value = true;
-      update();
-      songName.value = storageList[nextsong].title.toString();
-      await player.setAudioSource(AudioSource.uri(Uri.parse(songPath)));
-      await player.play();
-    } else if (id == 5) {
-      // loop
-      isShuffle.value = false;
-      isLoop.value = true;
-
-      if (isLoop.value == true) {
-        atLoopIndex.value = nextsong;
-      }
-    } else if (id == 6) {
-      isShuffle.value = true;
-      isLoop.value = false;
+  handleClick({String? value, context, path}) {
+    if (value == "Add to playlist") {
+      return showDialog<void>(
+        context: context,
+        barrierDismissible: true, // user must tap button!
+        builder: (BuildContext context) {
+          return AlertDialog(
+            backgroundColor: themes.halfGreys,
+            title: const Text('Playlist'),
+            content: SingleChildScrollView(
+              child: ListBody(
+                children: <Widget>[
+                  const Text('This is a demo alert dialog.'),
+                  SizedBox(
+                    width: 200,
+                    height: 230,
+                    child: Obx(() => ListView.builder(
+                        padding: const EdgeInsets.all(8),
+                        itemCount: itemsec.value.length,
+                        shrinkWrap: true,
+                        itemBuilder: (BuildContext context, int index) {
+                          return Flexible(
+                              child: InkWell(
+                            onTap: () {},
+                            child: SizedBox(
+                              width: Get.width,
+                              child: Padding(
+                                padding: const EdgeInsets.all(14.0),
+                                child: Obx(() => Text(
+                                      '+++${itemsec.value[index]}',
+                                      style: const TextStyle(
+                                          color: Colors.black, fontSize: 20),
+                                    )),
+                              ),
+                            ),
+                          ));
+                        })),
+                  )
+                ],
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('Approve'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+    } else {
+      return Container();
     }
-    update();
   }
 
   onLoopSong() async {
     isplaypause.value = true;
-    markindex = atLoopIndex.value;
+    markCurrentPlay = atLoopIndex.value;
     songImage.value = storageList[atLoopIndex.value].id;
-    update();
     songName.value = storageList[atLoopIndex.value].title;
     await player.setAudioSource(AudioSource.uri(
         Uri.parse((storageList[atLoopIndex.value].uri).toString())));
